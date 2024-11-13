@@ -1,0 +1,49 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 8 (required for Android builds)
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip3 install --upgrade Cython==0.29.19 virtualenv
+
+      - name: Install Buildozer and Android SDK
+        run: |
+          pip3 install buildozer
+          sudo apt install -y android-sdk
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses
+
+      - name: Build APK with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: android debug
+          buildozer_version: stable
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-release.apk
+          path: bin/*
